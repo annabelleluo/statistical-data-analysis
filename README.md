@@ -16,7 +16,7 @@ review.Rmd contains the statistical data analysis cheatsheet, which is a condens
 - Comparing 2 groups of CATEGORICAL 
   - Testing for one/two sample(s) case
 - Linear Regression 
-- Moddel selection 
+- Model selection 
   - best subset selection
   - Sequential selection method
 - Model Diagnostics on model error
