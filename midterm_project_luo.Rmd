@@ -1,0 +1,327 @@
+
+---
+title: 'STAT3621 Midterm Project'
+author: "Li Lan & Luo Ruijie"
+date: "3/9/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T,fig.show='hide',
+                      message = F, results = "hide")
+```
+
+```{r}
+# Copy from the midterm instructions
+library(mlbench)
+data("BostonHousing")
+?BostonHousing
+```
+
+```{r}
+# Preparation
+library(MASS)
+library(corrplot)
+library(ggplot2)
+library(plotly)
+```
+
+```{r}
+# Test missing value:
+any(is.na(BostonHousing))
+```
+
+## Exploratory Data Analysis
+
+```{r}
+# Exploratory Data Analysis
+str(Boston)
+head(Boston)
+summary(Boston)
+```
+```{r}
+#We first get the correlation matrix of all variables
+corr_matrix<-cor(Boston)
+corrplot(corr_matrix, type="upper")
+```
+
+```{r}
+# Boxplot for normality checking roughly.
+boxplot(Boston, col = "grey")
+```
+
+```{r}
+# Boxplot for variables with many outliers
+par(mfrow = c(1, 4))
+boxplot(Boston$crim, main='crim',col='Sky Blue')
+boxplot(Boston$zn, main='zn',col='Sky Blue')
+boxplot(Boston$rm, main='rm',col='Sky Blue')
+boxplot(Boston$black, main='black',col='Sky Blue')
+```
+
+## Analysis on Crime Rate
+```{r}
+# Analysis on the crime rate (crim) and portion of population with lower status in Boston (lstat)
+# Test the effect of Charles River dummy variable (chas) on the crime rate (crim) by boxplot and t-test.
+boxplot(crim~chas,data=Boston)
+```
+
+```{r}
+#For the t-test, we have: $H_0:\mu_0=\mu_1$ vs $H_1:\mu_0\ne\mu_1$
+Boston$chas = as.character(Boston$chas)
+t.test(crim~chas,data=Boston, var.equal=T)
+```
+
+````{r}
+# Histograms of crim, and scatterplots of rad, tax, and lstat on crim.
+par(mfrow = c(2,2))
+hist(Boston$crim, breaks=15, main = "Histogram of Crim", xlab = "crim")
+plot(Boston$rad, Boston$crim, main="Rad vs Crim", xlab="rad", ylab="crim")
+plot(Boston$tax, Boston$crim, main="Tax vs Crim", xlab="tax", ylab="crim")
+plot(Boston$lstat, Boston$crim, main="Lstat vs Crim", xlab="lstat", ylab="crim")
+```
+
+```{r}
+# Compare whether the median/distribution for tax and rad differ or not.
+wilcox.test(Boston$rad,Boston$tax,alternative="two.sided",exact=TRUE)
+```
+
+```{r}
+# Divide the data into several groups by the index of accessibility to radial highways (rad) and test whether their means of crim are equal using anova.
+# See the proportion of all index in a pie chart.
+bar = ggplot(Boston, aes(x = factor(1), fill = rad)) + geom_bar(width = 1)
+pie = bar  + coord_polar(theta = "y") + xlab("") + theme_bw()
+pie
+```
+
+```{r}
+# The anova test.
+Boston$crim = as.numeric(Boston$crim)
+Boston$rad = as.factor(Boston$rad)
+crim.aov = aov(crim~rad, data=Boston)
+summary(crim.aov)
+```
+
+```{r}
+# We finally test whether lstat has significant effect on crim, i.e., whether $\beta_{lstat}=0$.
+fit = lm(crim~lstat,data=Boston)
+summary(fit)
+```
+
+
+## Predict median housing price with regression
+
+```{r}
+#select best subset
+library(leaps)
+regfit_full = regsubsets(medv~., data = Boston, nvmax = 13)
+#exhaustive search is preferred as the variable size is not too big for calculation
+reg_summary = summary(regfit_full)
+reg_summary 
+```
+```{r}
+#plots showing the best number of variables
+par(mfrow = c(2,2))
+plot(reg_summary$rss, xlab = "Number of Variables", ylab = "RSS", type = "l")
+plot(reg_summary$adjr2, xlab = "Number of Variables", ylab = "Adjusted RSq", type = "l")
+
+adj_r2_max = which.max(reg_summary$adjr2) #11
+points(adj_r2_max, reg_summary$adjr2[adj_r2_max], col ="red", cex = 2, pch = 20)
+
+plot(reg_summary$cp, xlab = "Number of Variables", ylab = "Cp", type = "l")
+cp_min = which.min(reg_summary$cp) # 11
+points(cp_min, reg_summary$cp[cp_min], col = "red", cex = 2, pch = 20)
+
+plot(reg_summary$bic, xlab = "Number of Variables", ylab = "BIC", type = "l")
+bic_min = which.min(reg_summary$bic) # 11
+points(bic_min, reg_summary$bic[bic_min], col = "red", cex = 2, pch = 20)
+```
+They all agree that a model with 11 variables performs best
+
+```{r}
+plot(regfit_full, scale = "bic")
+```
+```{r}
+plot(regfit_full, scale="Cp")
+```
+
+```{r}
+plot(regfit_full, scale="adjr2")
+```
+The above plots show a ubiquitous selection of 11 variables both omitting "indus" and "age"
+It is thus significant to select the model with 11 variables
+
+```{r}
+coef(regfit_full, 11)
+```
+The best performing subset omits "indus" and "age"
+
+Forward and backward selection methods are presented below for reference
+```{r}
+#forward selection
+regfit_fwd = regsubsets(medv~., data=Boston, nvmax=13, method="forward");
+summary(regfit_fwd)
+```
+
+```{r}
+# Backward
+regfit_bwd = regsubsets(medv~., data=Boston, nvmax=13, method="backward")
+summary(regfit_bwd)
+```
+```{r}
+#stepwise selection
+regfit_step = regsubsets(medv~., data=Boston, nvmax=13, method="seqrep")
+summary(regfit_step)
+
+```
+forward, backward and stepwise selections justify for the best model of 11 variables previously selected.
+```{r}
+#selected model
+model_selected <- lm(medv ~ .-indus-age, data = Boston)
+summary(model_selected)
+```
+
+## Model Diagnostics
+```{r}
+par(mfrow = c(2,2))
+plot(model_selected)
+```
+Residuals vs Fitted plot shows that the relationship between medv and predictors is not completely linear. Also, normal qq plot is skewed implying that residuals are not normally distributed. A different functional form may be required. Hence, boscox transformation is performed.
+```{r}
+#normality check
+shapiro.test(Boston$medv)
+```
+p-value = 4.941e-16 < 0.05 $H_0$ is rejected, fails to satisfy normality assumption
+```{r}
+#boxcox transformation
+boxcox(model_selected, plotit = TRUE)
+```
+```{r}
+boxcox <- boxcox(model_selected, plotit = T, lambda = seq(0,0.5, by = 0.1))
+```
+
+
+```{r}
+lambda <- boxcox$x[which.max(boxcox$y)]
+lambda
+```
+$\lambda = 0.1$
+
+```{r}
+model_cox = lm(formula = (((medv ^ lambda) - 1) / lambda) ~ .-age-indus, data = Boston)
+summary(model_cox)
+```
+```{r}
+par(mfrow = c(2,2))
+plot(model_cox)
+```
+```{r}
+residuals <- data.frame('Residuals' = model_cox$residuals)
+ggplot(residuals, aes(x=Residuals)) + geom_histogram(color='black', fill='skyblue') + ggtitle('Histogram of Residuals')
+```
+
+
+```{r}
+plot(fitted(model_cox), resid(model_cox), col = "dodgerblue",
+     pch = 20, cex = 1.5, xlab = "Fitted", ylab = "Residuals")
+abline(h = 0, lty = 2, col = "darkorange", lwd = 2)
+```
+
+```{r}
+model_log = lm(log(medv)~ .-indus-age, data = Boston)
+par(mfrow = c(2,2))
+plot(model_log)
+```
+```{r}
+summary(model_log)
+```
+
+
+```{r}
+residuals <- data.frame('Residuals' = model_log$residuals)
+ggplot(residuals, aes(x=Residuals)) + geom_histogram(color='black', fill='skyblue') + ggtitle('Histogram of Residuals')
+```
+
+
+```{r}
+plot(fitted(model_log), resid(model_log), col = "dodgerblue",
+     pch = 20, cex = 1.5, xlab = "Fitted", ylab = "Residuals")
+abline(h = 0, lty = 2, col = "darkorange", lwd = 2)
+```
+
+
+### Collinearity 
+```{r}
+library(faraway)
+```
+```{r}
+summary(model_selected)
+```
+
+
+```{r}
+vif(model_selected)
+```
+n practice it is common to say that any VIF greater than 5 is cause for concern.Here rad and tax. However, it does not affect regression result much
+
+#We drop chas and rad because they are non numeric
+#We drop crim, zn and black because they have lot of outliers
+```{r}
+pairs(~ medv + ptratio + black + lstat + dis +tax+nox+ rm + crim, data = Boston, main = "Boston Data")
+```
+
+```{r}
+lm.fit2 <- lm(medv~.-age-indus+I(lstat^2),data=Boston)
+summary(lm.fit2)
+```
+
+```{r}
+lm.fit3 <- lm(medv~.-indus-age-zn+rm*lstat,data=Boston)
+summary(lm.fit3)
+```
+
+```{r}
+par(mfrow = c(2,2))
+plot(lm.fit3)
+```
+```{r}
+residuals <- data.frame('Residuals' = lm.fit3$residuals)
+res_hist <- ggplot(residuals, aes(x=Residuals)) + geom_histogram(color='black', fill='skyblue') + ggtitle('Histogram of Residuals')
+res_hist
+```
+
+
+
+
+```{r}
+#cooks distance
+cooksd <- cooks.distance(lm.fit3)
+plot(cooksd, pch="*", cex=2, main="Influential Obs by Cooks distance")  # plot cook's distance
+abline(h = 4*mean(cooksd, na.rm=T), col="red")  # add cutoff line
+text(x=1:length(cooksd)+1, y=cooksd, labels=ifelse(cooksd>4*mean(cooksd, na.rm=T),names(cooksd),""), col="red")  # add labels
+```
+```{r}
+influential <- as.numeric(names(cooksd)[(cooksd > 4*mean(cooksd, na.rm=T))])  # influential row numbers
+inf_obs <- Boston[influential, ]
+inf_obs
+```
+
+
+```{r}
+ggplot()+coord_flip()+
+  geom_boxplot(data = Boston, aes(x= "", y=rm))+
+  geom_point(data = inf_obs,aes(x="", y=rm),color = 'red')
+```
+
+
+
+
+
+
+
+
+
+
+
