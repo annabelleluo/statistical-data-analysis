@@ -1,0 +1,1261 @@
+---
+title: "STAT2621 main topics"
+output: html_notebook
+---
+
+## Chapter 1&2 -Introduction (Tut1,2)
+- Error: a-H0 is true but reject
+        Beta- H0 is false but accept
+- Sensitivity = TP/(TP+FN) – true positive rate
+- Specificity = TN/(TN+FP) – true negative rate
+```{r}
+nrow(df)
+ncol(df)#number of row and column
+colnames(df) #get column names
+
+dimnames(tbl) <- list(believe = c("Yes","No"), ##row
+                      age = c("Age3","Age4","Age5","Age6")) ##column name
+#create data
+data.frame("believe" = c(rep("Yes",63),rep("No",55)),
+                     "age" = c(rep("Age3",30),rep("Age4",13),rep("Age5",15),
+                               rep("Age6",5),rep("Age3",5),rep("Age4",10),
+                               rep("Age5",12),rep("Age6",28)))
+# convert factors to numeric
+for(i in 1:9) {
+ bc[, i] <- as.numeric(as.character(bc[, i]))
+}
+
+#missing value
+any(is.na(df))
+sum(is.na(df))
+df1<-na.omit(df) #remove the missing values and form df1
+
+Hitters %>%
+  is.na() %>%
+  sum()
+Hitters = Hitters %>%
+  na.omit()
+
+#table of missing value
+apply(is.na(df), 2, sum)
+
+-MARGIN=1`: the manipulation is performed on rows
+-MARGIN=2`: the manipulation is performed on columns
+-MARGIN=c(1,2)` the manipulation is performed on rows and columns
+
+#create groups
+df$agegrp <- findInterval(df$Age, c(20,40,60,80))
+
+#number of distinct factors in a column
+table(df$LCID)
+## Table for a single variable
+table(Arthritis$Improved)
+prop.table(tab1) #Proportions for a single variable table
+
+count(df, Report.date) #=# as.data.frame(table(df$Report.date))
+#data frame with table categorized by two groups
+as.data.frame(table(df$Report.date, df$Gender))
+
+#select most
+which(col_mv==max(col_mv))
+
+# change the character variable into date variable
+df1$Report.date = as.Date(df1$Report.date, format="%d/%m/%Y")
+
+#time specific
+df$hour_id<-strptime(df$hour_id,format='%m/%d/%Y %H:%M')
+
+r_d<-floor_date(df$hour_id,'day')
+table(as.character(r_d)) #number of records per day
+
+#median
+col_median=apply(df[5:22],2,function(x) tapply(x,df$LCID,median))#Calculate the median value of each column (variable) per LCID
+apply(df[5:22],2,function(x) tapply(x,floor_date(df$hour_id,'day'),median)) #median value per day of df
+
+#aggregate
+aggregate(mtcars, by=list(cyl), Fun= mean, na.rm= T)
+
+#sort
+df_com_case<-tapply(df$NumComplains,df$LCID,sum) #sum of complaints split by LCID
+sort(df_com_case,decreasing = TRUE) #sort out top10
+mtcars[order(mtcars$mpg,-mtcars$cyl)]#sort from df mpg scending and cyl descending 
+
+#split the string only get first 5
+substring(df$LCID,1,5)
+
+#merge dataframe by
+merge(dfA,dfB, by=c("ID","Country"))
+
+#create factor
+as.factor(ifelse(insurance_smoker$bmi>30,1,0))#create a variable bmi_factor which equals one if bmi > 30 and zero otherwise
+
+## Check factor levels (categories)
+levels(Arthritis$Improved)
+
+## Cross table by two variables
+xtabs(~ Treatment +Improved, Arthritis)
+table(df_q1$SEX, df_q1$TYPE)
+```
+
+-plots
+```{r}
+#a boxplot of charges by smoker and sex
+p <-ggplot(insurance, aes(x=sex, y=charges, fill=smoker))+ #by smoker and sex
+  geom_boxplot(outlier.colour="red")+
+  ggtitle("boxplot of charges by smoker and sex")+ #title
+  xlab("smoker & sex")+ #x name
+  ylab("insurance charges")+ #yname
+  geom_jitter(shape = 15,
+        color = "steelblue",
+        position = position_jitter(0.21)) +
+  theme_classic()
+
+ggplot(dat, aes(x = grps, y = x, fill = grps)) +
+    geom_boxplot()
+
+boxplot(weight~group, data = PlantGrowth)
+boxplot(airquality$Ozone,
+main = "Mean ozone in parts per billion at Roosevelt Island",
+xlab = "Parts Per Billion",
+ylab = "Ozone",
+col = "orange",
+border = "brown",
+horizontal = TRUE,
+notch = TRUE
+)
+
+# Box plot with two factor variables
+boxplot(Days ~ A * B, data=df1, frame = FALSE, 
+        col = c("#00AFBB", "#E7B800"), ylab="Days")
+
+# a scatter plot between charges and bmi by smoker
+p <- ggplot(insurance, aes(x=bmi, y=charges, color=smoker, group=smoker)) # group by smoker "group"
+p + geom_point() +
+  geom_smooth(method=lm, se=FALSE, aes(fill=smoker))+
+  xlab("bim") #scatter and line
+
+# ....by sex ans bmifactor
+p <- ggplot(insurance_smoker, aes(x=bmi, y=charges, color=sex, shape=bmi_factor)) # color distinguish sex, shape distinguish factor
+p + geom_point() +
+  geom_smooth(method=lm, se=FALSE, aes(fill=sex))+ #se = TRUE plot CI
+  xlab("bmi")+
+  ylab("charges")
+# density plot of charges by bmifactor
+ggplot(isnurance-smoker, aes(x=charges, color = sex ,fill= bmi_factor))
+
+ggplot(grp_date, aes(x=`daily total reported cases`))+
+  geom_histogram(aes(y=..density..), colour= "black", fill="white",binwidth = 5)+
+  geom_density(alpha=.2, fill = "#FF6666")+
+  ggtitle("Density Histogram plot of Daily Total Reported Cases") +
+  xlab("daily total reported cases") +
+  ylab("Density")+
+  geom_vline(aes(xintercept=mean(`daily total reported cases`)),color="blue", linetype="dashed", size=1) +
+  theme_bw()+
+  theme(plot.title = element_text(hjust = 0.5))
+
+#bar plot 
+barplot(table(df_q1$TYPE)) #need table
+
+#bar plot: cancer distribution by sex and type
+counts <- table(df_q1$SEX, df_q1$TYPE)
+#side-byside
+barplot(counts, main="Cancer Distribution by SEX and Type",
+        xlab="Number of Patients", col=c("darkblue","red"),
+        legend = rownames(counts), beside=TRUE) 
+#stacked
+barplot(counts, main="Car Distribution by Gears and VS",
+        xlab="Number of Gears", col=c("darkblue","red"),
+        legend = rownames(counts))
+
+# Basic Scatterplot Matrix
+pairs(~mpg+disp+drat+wt,data=mtcars,
+   main="Simple Scatterplot Matrix")
+
+#pie chart
+case_clf<-table(df$Case.classification.)
+names<-names(case_clf)
+names<-names[order(case_clf)]
+case_clf <- sort(case_clf)
+pct <- round(as.numeric(case_clf)/sum(as.numeric(case_clf))*100)
+lbls <- paste(names, pct)
+lbls <- paste(lbls,"%",sep="")
+pie(case_clf, lbls, col = rainbow(length(case_clf)), main = "Pie Chart of Case Classification")
+```
+
+```{r}
+#dplyr
+library(dplyr)
+df %>%
+    group_by(poison)%>%
+    summarise(
+        count_poison = n(),
+        mean_time = mean(time, na.rm = TRUE),
+        sd_time = sd(time, na.rm = TRUE)
+    )
+group_by(my_data, supp, dose) %>%
+  summarise(
+    count = n(),
+    mean = mean(len, na.rm = TRUE),
+    sd = sd(len, na.rm = TRUE)
+  )
+
+df %>%  filter(Case.classification. == i) %>% count(Report.date)
+```
+
+## Chapter 3- Descriptive stats (tut2)
+- mean, median, mode
+```{r}
+names(table(x))[table(x)==max(table(x))] #mode
+```
+
+- summary stats
+```{r}
+summary(df)
+
+library(psych)
+describe(df_q1[vars]) # obtain all the summary statistics except for the quantiles
+```
+
+- coeffs of variantion: $cv = \sigma/\mu$
+- skewness, kurtosis
+```{r}
+library(moments)
+skewness(x)
+kurtosis(x)
+```
+
+- testing for normality: 
+  - P-P and Q-Q
+  - Shapiro Wilk test
+  - Kolmogorov-Smirnov Test
+  - Cramer-von mies test
+```{r}
+plot((rank(x)-0.5)/length(x), pnorm(mean=mean(x), sd=sd(x), x), main="P-P plot")
+abline(0, 1, col=2) #pp plot
+qqnorm(x) #qqplot
+abline(mean(x), sd(x), col=2, lwd=2)
+
+shapiro.test(my_data$len)
+ks.test(my_data$len,"pnorm",mean=mean(my_data$len),sd=sd(my_data$len))
+library(goftest)
+cvm.test(my_data$len,"pnorm",mean=mean(my_data$len),sd=sd(my_data$len))
+```
+
+- Chisq test for One-way tables
+  e.g. Do the data support the hypothesis that the sex ratio is 50:50?
+```{r}
+chisq.test(c(49,51))
+```
+
+### Numerical stats for 2+ variables - Categorical
+- Pearson correlation coefficient: values of continuous variable
+- Spearman rank correlation: ranks of numerical variables
+```{r}
+cor(wt, mpg,method="pearson")
+cor(wt, mpg,method="spearman")
+```
+- Test whether it is an important factor (correlation is significant)
+```{r}
+# test the Pearson's correlation of AGE and DAYC
+n = 47
+rc = cor(df_q1$AGE, df_q1$DAY_C, method='pearson')
+Tc = rc * sqrt(n-2) / sqrt(1-rc^2)
+pt(Tc, n-2, lower.tail = TRUE)
+```
+
+#### Association of Nominal Variables:
+- Pearson Chisq test: whether X and Y are independent
+```{r}
+chisq.test(matrix, correct =F)
+```
+
+- Likelihood ratio test
+```{r}
+# Log likelihood ratio test
+library(DescTools)
+observed    = c(7, 34)
+theoretical = c(0.174, 0.826)
+GTest(x = observed,
+      p = theoretical,
+      correct = "none")
+
+GTest(matrix)
+```
+
+- Fishers exact test, whether a/b independent: non-parametric
+```{r}
+Input =("
+ Site     Alive  Dead
+ Lower    43     7
+ Middle   44     6
+ Upper    49     1")
+Matriz = as.matrix(read.table(textConnection(Input),
+                   header=TRUE,
+                   row.names=1))
+fisher.test(Matriz,alternative="two.sided")
+```
+
+#### Ordinal
+- correlation of scores: spearman rank correlation
+- Test for exsitence of trends: MH test
+```{r}
+source("pears.cor.r")
+pears.cor(job.satis, c(7.5, 20, 32.5, 60), c(1,2,3,4)) # c() vectors of score values
+```
+
+#### Various mesures of association
+```{r}
+library(vcd)
+assocstats(heart)
+```
+
+
+## Chapter 4- Compare 2 groups of CONTINUOUS (tut3)
+
+### Testing for 1 group mean
+- t-test assumptions: iid normal distributed, constant variance
+- t-test for non-normal
+  - Heavy-tailed: Confidnce interval wider -> lost of power of any testing of hypotheses
+  - skewed distribution: pop. variance is infinite; t-stat sampling not symmetrically distributed, the degree of skewness decreses as the sample size increases; power of any testing of hypotheses is even less; use median as a measure of center
+  - CLT: n>= 30 is enough for highly skewed pop
+  - bootstrap: sample size too small for CLT
+```{r}
+###Bootstrapping
+B = 10000
+mx = rep(0, B) # initialize a vector to store mean of each bootstrap sample. 
+sx = rep(0,B) # initialize a vector to store s.d. of each bootstrap sample.
+tx = rep(0,B) # initialize a vector to store t-statistic of each bootstrap sample.
+
+n = length(bootsample) # get the sample size.
+
+for(b in 1:B){
+  # First get a sample of size n with replacement from the original sample. 
+  set.seed(b)
+  sample_b = sample(bootsample, replace=T)
+  mx[b] = mean(sample_b)
+  sx[b] = sd(sample_b)
+  tx[b] = sqrt(n) * (mx[b] - mean(bootsample))/sx[b]
+}
+
+#sample quantile
+t_lower = quantile(tx,0.025)
+t_upper = quantile(tx,0.975)
+#confidence interval
+mean(bootsample) + t_lower*sd(bootsample)/sqrt(n)
+mean(bootsample) + t_upper*sd(bootsample)/sqrt(n)
+
+#bootstrap testing for mean
+mu0 = 75; 
+t_mu0 = (mean(bootsample) - mu0)/sd(bootsample)*sqrt(n)
+p_boot = sum(tx>t_mu0)/length(tx) #H1: mu>m0
+p_boot
+```
+  
+  
+### Testing for 2 groups mean 
+- paired t-test on Di: $D_i = X_i-Y_i$
+```{r}
+df$Y <- df$A - df$B
+t.test(df_q1$Y, mu = 0, alternative = "greater","less","two.sided", conf.level = 0.95)
+
+t.test(x=bank$Current,y=bank$Start,mu=6000, paired=T) #before and after
+```
+
+- 2-sample t test (equal variance) on (X_bar - Y_bar)
+  - assumption: independence & equal variances
+  - But, data exhibits dependence due to: cluster effect; serial and spatial correlation
+
+- Test equality of 2 variances: F test
+```{r}
+# test whether the two variances are equal or not. 
+var.test(Age~Sex,data=bank, alternative="two.sided")
+```
+
+- 2-sample t test (unequal variance) on (X_bar - Y_bar)
+  - t test
+```{r}
+t.test(Age~Sex, data=bank, var.equal=F,T) #F is Welch test
+t.test(x, y, mu = 0, alternative = "greater", conf.level = 0.95)
+```
+  
+  - Welch's Test
+```{r}
+t.test(x,y,alternative="less")
+```
+  
+
+### ANOVA testing homogeneity of k pop means
+- assumption: all pop. variance are equal; iid normally distributed
+$H_0: \mu_1 = \mu_2 = ...=\mu_i$
+H1: At least one of the four population mean is different from the rest
+```{r}
+aov(mg~product, data=soy)
+```
+
+### Compare Distribution of 2 groups
+- Wilcoxon ranksum test ($\mu_x = \mu_y$)
+  - preferred when: 2 samples are compared; 2 groups of data are independent; continuous or ordinal variable; non-parametric: deviate from normal distribution
+```{r}
+wilcox.test(respiration~condition, data=soil, alternative="two.sided",exact=TRUE)
+
+wilcox.test(y, x, paired=TRUE, exact=TRUE) #wilcoxon signed rank test
+
+#numerically
+# There are no ties in this data, so the result of wilcox.test() and the normal approximation are the same
+# note that wilcox.test() can not deal with ties (the reuslts will not the same, a little biased)
+x = cars$`suggested.retail.price`
+y = cars$`dealer.cost`
+m = length(x); n = length(y)
+N = m+n
+sort.xy = sort(c(x,y))
+order.xy = order(c(x,y))
+z.stat = as.numeric(order.xy%in%(1:m))
+
+W = sum(c(1:N)*z.stat) # here W is the sum of ranks of full data 
+Z = (W-m*(N+1)/2)/(sqrt(m*n*(N+1)/12))
+
+W # Wilcoxon rank test statistic based on formula
+
+
+```
+ 
+### Variance stablizing transformation
+Fulfill assumption that all pop. variance are equal
+- log-transformation
+- box-cox
+- square-root
+- arcsin 
+
+## Chapter 5- Comparing 2 groups of CATEGORICAL (tut4)
+### One-sample case
+- z-test for proportion p: binomial dist.
+```{r}
+prop.test(x=9,n=10,p=.2,correct=F) # returns Wilson CI #"correct" for continuity correction
+```
+
+- one-sample exact z-test for p: sample size not too large
+```{r}
+binom.test(x=9,n=10,p=.2)
+```
+```{r}
+library(DescTools)
+BinomCI(x=9,n=10,conf.level = 0.95, sides="two.sided",
+        method="wilson")
+BinomCI(x=9,n=10,conf.level = 0.95, sides="two.sided",
+        method="wald")
+BinomCI(x=9,n=10,conf.level = 0.95, sides="two.sided",
+        method="clopper-pearson") ###exact CI
+```
+
+### Two-sample case
+- z-test for p_x and p_y
+$H_0: p_x = p_y$
+```{r}
+prop.test(x=c(9,4), n=c(12,13),correct=F) #x_bar =9/12, y_bar=4/13
+#confidence interval for p1-p2 provided
+```
+
+- McNemar's test for 2 paired samples
+$H_0: \theta_2 = \theta_3$ there is no effect
+```{r}
+Performance <- matrix(c(4,9,3,16),nrow=2)
+Performance
+mcnemar.test(Performance,correct=F)
+```
+
+- Test for 2x2 contingency table: whether X and Y are independent 
+```{r}
+#pearson chisq test
+tbl = matrix(c(173,150,125,73), nrow=2)
+chisq.test(tbl,correct=F)
+```
+
+## Chapter 6- Linear Regression (tut5)
+- Hypothesis testing on $\beta$
+H0: K'beta = m ~ F(s,n-p-1), where K' is s*(p+1) full row rank matrix
+
+```{r}
+#model
+# read this data 
+corns = read.table('yield.txt')
+colnames(corns) <- c("Y", "X1", "X2", "X3", "X4", "X5", "X6", "X7")
+head(corns)
+
+fit.full = lm(Y~., data=sales)
+summary(fit.full)
+
+#plot
+plot(df$X3, df$Y, xlab="X3: time to run 1.5 miles (in minutes)",ylab="Y: oxygen intake rate")
+
+#prediction and CI
+pd1 = predict(fit1, newdata=data.frame(X3=9.9),interval="predict",se.fit = T) #prediction interval
+pd1 = predict(fit1, newdata=data.frame(X3=9.9),interval="confidence",se.fit = T) #confidence interval
+
+#CI not use
+pd1$fit[1] - abs(qt(0.05/2, df=nrow(df)-2))* sqrt(pd1$se.fit^2+pd1$residual.scale^2)
+pd1$fit[1] + abs(qt(0.05/2, df=nrow(df)-2))* sqrt(pd1$se.fit^2+pd1$residual.scale^2)
+
+#Perform F-test on the significance of all the parameters
+#read from summary(fit)
+```
+
+- Explain the reason why we are concerned with the residual plots between the residuals and the five independent variables. And get the residual v.s. fitted values plots, QQ plot.
+```{r}
+# get the residual v.s. fitted values plots, QQ plot
+plot(fit.full)
+
+?scale-location; residual-leverage plots!!!!
+
+# get the residuals
+sales.res = resid(fit.full)
+
+# draw the plot for each variable
+par(mfrow=c(3,2))
+
+plot(sales$X1, sales.res, ylab="Residuals", xlab="X1") 
+abline(0, 0) 
+
+plot(sales$X2, sales.res, ylab="Residuals", xlab="X2") 
+abline(0, 0) 
+
+plot(sales$X3, sales.res, ylab="Residuals", xlab="X3") 
+abline(0, 0) 
+
+plot(sales$X4, sales.res, ylab="Residuals", xlab="X4") 
+abline(0, 0) 
+
+plot(sales$X5, sales.res, ylab="Residuals", xlab="X5") 
+abline(0, 0) 
+```
+Based on the model assumption, the error must be independent of the independent variables. Hence, the residual plots between the residuals and each of the independent variables must exhibit random patterns.
+
+## Chapter 7- Variable selection & Model Diagnostics (tut6)
+### Model Selection
+#### best subset selection
+- adjusted R^2:
+  could be negative; adj R2 can offset some of the increase in the value of R2 and provide measure of goodness of fit 
+  choose larger
+- Mallow's Cp: choose close to p+1 and small p
+- AIC, BIC: choose lower
+```{r}
+library(olsrr)
+print(cbind(c(ols_mallows_cp(fit1, fit2.full),
+              ols_mallows_cp(fit2, fit2.full),
+              ols_mallows_cp(fit3, fit2.full),
+              ols_mallows_cp(fit4, fit2.full),
+              ols_mallows_cp(fit5, fit2.full),
+              ols_mallows_cp(fit6, fit2.full)),
+            c(summary(fit1)$r.squared,summary(fit2)$r.squared,
+              summary(fit3)$r.squared,summary(fit4)$r.squared,
+              summary(fit5)$r.squared,summary(fit6)$r.squared),
+            c(summary(fit1)$adj.r.squared,summary(fit2)$adj.r.squared,
+              summary(fit3)$adj.r.squared,summary(fit4)$adj.r.squared,
+              summary(fit5)$adj.r.squared,summary(fit6)$adj.r.squared)))
+BIC(fit1)
+```
+
+#### Sequential selection method
+- Forward selection: start from intercept
+- Backward selection: start from full 
+- Stepwise selection 
+- Exhaustive search
+
+```{r}
+library(leaps)
+#selection
+regfit_full = regsubsets(Salary~., data = Hitters, nvmax = 19, method ="forward","backward","seqrep")
+reg_summary = summary(regfit_full)
+
+#plot criterion
+par(mfrow = c(2,2))
+plot(reg_summary$rss, xlab = "Number of Variables", ylab = "RSS", type = "l")
+plot(reg_summary$adjr2, xlab = "Number of Variables", ylab = "Adjusted RSq", type = "l")
+
+# We will now plot a red dot to indicate the model with the largest adjusted R^2 statistic.
+# The which.max() function can be used to identify the location of the maximum point of a vector
+adj_r2_max = which.max(reg_summary$adjr2) # 11
+
+# The points() command works like the plot() command, except that it puts points 
+# on a plot that has already been created instead of creating a new plot
+points(adj_r2_max, reg_summary$adjr2[adj_r2_max], col ="red", cex = 2, pch = 20)
+
+# We'll do the same for C_p and BIC, this time looking for the models with the SMALLEST statistic
+plot(reg_summary$cp, xlab = "Number of Variables", ylab = "Cp", type = "l")
+cp_min = which.min(reg_summary$cp) # 10
+points(cp_min, reg_summary$cp[cp_min], col = "red", cex = 2, pch = 20)
+
+plot(reg_summary$bic, xlab = "Number of Variables", ylab = "BIC", type = "l")
+bic_min = which.min(reg_summary$bic) # 6
+points(bic_min, reg_summary$bic[bic_min], col = "red", cex = 2, pch = 20)
+
+#plot regsubset
+plot(regfit_full, scale="adjr2")
+coef(regfit_full, 11)
+plot(regfit_full, scale="Cp")
+plot(regfit_full, scale="bic")
+```
+
+### Model Diagnostics on model error
+#### Assumptions:
+  - linearity: log-transformation, polynomial transformation
+  - equal and constant variance: variance stablising transformation
+  - independence: iid errors
+  - normality
+```{r}
+#residual plot
+# At any fitted value, the mean of the residuals should be roughly 0. If this is the case, the linearity assumption is valid. For this reason, we generally add a horizontal line at y=0 to emphasize this point. 
+# At every fitted value, the spread of the residuals should be roughly the same. If this is the case, the constant variance assumption is valid.
+
+par(mfrow = c(1, 2))
+
+plot(fitted(initech_fit), resid(initech_fit), col = "grey", pch = 20,
+     xlab = "Fitted", ylab = "Residuals", main = "Fitted versus Residuals")
+abline(h = 0, col = "darkorange", lwd = 2)
+
+qqnorm(resid(initech_fit), main = "Normal Q-Q Plot", col = "darkgrey") #qqplot
+qqline(resid(initech_fit), col = "dodgerblue", lwd = 2)
+```
+  
+#### Non-linearity 
+- linearity: log-transformation on y
+    polynomial transformation on x_i
+```{r}
+#polynomial trans
+mark_mod_poly2 = lm(sales ~ advert + I(advert ^ 2), data = marketing)
+summary(mark_mod_poly2)
+ggplot(data = marketing, aes(x = advert, y = sales)) +
+  stat_smooth(method = "lm", se = FALSE, color = "green", formula = y ~ x) +
+  stat_smooth(method = "lm", se = FALSE, color = "blue", formula = y ~ x + I(x ^ 2)) +
+  stat_smooth(method = "lm", se = FALSE, color = "red", formula = y ~ x + I(x ^ 2)+ I(x ^ 3)) +
+  geom_point(colour = "black", size = 3)
+#faster way to specify a model with many higher order terms
+fit6_alt = lm(mpg ~ poly(mph, 6), data = econ) #poly uses orthogonal polynomials
+fit6_alt2 = lm(mpg ~ poly(mph, 6, raw = TRUE), data = econ) # equal to use I() repeatedly
+```
+
+#### Non-constant variance (Variance Stablising Transformation)
+Fulfill assumption that all pop. variance are equal
+- log-transformation
+```{r}
+initech_fit_log = lm(log(salary) ~ years, data = initech)
+#plot log fit curve
+plot(salary ~ years, data = initech, col = "grey", pch = 20, cex = 1.5,
+     main = "Salaries at Initech, By Seniority")
+curve(exp(initech_fit_log$coef[1] + initech_fit_log$coef[2] * x),
+      from = 0, to = 30, add = TRUE, col = "darkorange", lwd = 2)
+#compare RMSE
+sqrt(mean((initech$salary - exp(fitted(initech_fit))) ^ 2))
+sqrt(mean((initech$salary - exp(fitted(initech_fit_log))) ^ 2))
+```
+
+- box-cox
+$y^\lambda-1/\lambda$
+```{r}
+boxcox(savings_model, plotit = TRUE, lambda = seq(0.5, 1.5, by = 0.1)) #determine lambda
+gala_model_cox = lm((((Species ^ 0.3) - 1) / 0.3) ~ Area + Elevation + Nearest + Scruz + Adjacent, data = gala)#refit model
+
+boxcox(df1$Days, lambda = c(-1, 2), optimize = TRUE, objective.name = "Log-Likelihood")
+shapiro.test(BoxCox(df1$Days, lambda))#check normality after transformation
+```
+
+- square-root
+- arcsin
+
+#### Non-normality 
+- QQ-plot and Shapiro test
+- log-transformation sometimes helps
+- otherwise boostrap analysis can help find p-value
+
+#### Unusual Observations: Outliers and influential observations
+- Outlier
+- Influential observation: it could cause LSE to be substantially different from what they would be if if it removed from the data
+  - Cook's distance: >4mean
+- Record typo; Drop them if it's unlikely; Use dummy variable to remove the effect
+```{r}
+#detect outliers
+outlier_values <- boxplot.stats(ozone$pressure_height)$out  # outlier values.
+boxplot(ozone$pressure_height, main="Pressure Height", boxwex=0.1)
+mtext(paste("Outliers: ", paste(outlier_values, collapse=", ")), cex=0.6)
+
+library(car)
+outlierTest(mod)
+outlier(y) #gets the extreme most observation from the mean
+outlier(y,opposite=TRUE) #fetches outlier from the other side.
+
+scores(x)  # z-scores => (x-mean)/sd
+scores(x, type="chisq")  # chi-sq scores => (x - mean(x))^2/var(x)
+scores(x, type="t")  # t scores
+scores(x, type="chisq", prob=0.9)  # beyond 90th %ile based on chi-sq, return TRUE/FALSE
+```
+
+
+```{r}
+#cooks distance
+cooksd <- cooks.distance(lmmodel)
+plot(cooksd, pch="*", cex=2, main="Influential Obs by Cooks distance")  # plot cook's distance
+abline(h = 4*mean(cooksd, na.rm=T), col="red")  # add cutoff line
+text(x=1:length(cooksd)+1, y=cooksd, labels=ifelse(cooksd>4*mean(cooksd, na.rm=T),names(cooksd),""), col="red")  # add labels
+
+#track down influential rows
+influential <- as.numeric(names(cooksd)[(cooksd > 4*mean(cooksd, na.rm=T))])  # influential row numbers
+head(ozone[influential, ])  # influential observations.
+```
+
+#### Multicollinearity
+- VIF (variance inflation factor):
+$VIF_j = 1/TOL_j= 1/(1-R_j^2)$
+  - VIF greater than 5 is enough to suspect multicollinarity
+- Symptoms:
+  beta coeffs of some important variables are insignificant but the model is significant jointly;
+  (F-test significant but beta test insignificant)
+  correlation between some pairs of independent variables are extremely high;
+  prediction ok but the coeffs do not make sense in explaining
+- Remedies:
+  - Eliminate one of the highly correlated variables
+  - PCA(principle components analysis): on the covariance of X to produce a set of linearly independent combinatins of columns of X s.t. the total variance of columns of X is preserved
+  - add constraints on beta: when X is nearly singular, it needs penality for large value of beta:
+    - Ridge
+    - Lasso
+```{r}
+pairs(seatpos, col = "dodgerblue")
+round(cor(seatpos), 2) #correlation plot
+
+vif(model)
+```
+
+e.g. investigate the effect of adding another variable(htshoes) to this smaller model.
+- variable added plot: Similarly a variable added plot visualizes these residuals against each other. It is also helpful to regress the residuals of the response against the residuals of the predictor and add the regression line to the plot.
+```{r}
+plot(resid(hip_model_small) ~ resid(ht_shoes_model_small), 
+     col = "dodgerblue", pch = 20,
+     xlab = "Residuals, Added Predictor", 
+     ylab = "Residuals, Original Model")
+abline(h = 0, lty = 2)
+abline(v = 0, lty = 2)
+abline(lm(resid(hip_model_small) ~ resid(ht_shoes_model_small)),
+       col = "darkorange", lwd = 2)
+```
+  - Here the variable added plot shows almost no linear relationship. This tells us that adding HtShoes to the model would probably not be worthwhile. Since its variation is largely explained by the other predictors, adding it to the model will not do much to improve the model. However it will increase the variation of the estimates and make the model much harder to interpret.
+  - Had there been a strong linear relationship here, thus a large partial correlation coefficient, it would likely have been useful to add the additional predictor to the model.
+  
+- partial correlation coefficient
+```{r}
+hip_model_small = lm(hipcenter ~ Age + Arm + Ht, data = seatpos)
+ht_shoes_model_small = lm(HtShoes ~ Age + Arm + Ht, data = seatpos)
+cor(resid(ht_shoes_model_small), resid(hip_model_small))
+```
+
+## Chapter 8- One Way ANOVA (multiple K groups)
+focus on the trade-off between goodness of fit (minimizing errors) and complexity of model.
+### One-way ANOVA
+testing equality in means for k>2 independent populations
+- Assumptions: iid, constant variance, normality
+$H_0: \mu_1=\mu_2=...=\mu_k$
+H1: at least two means are not equal
+```{r}
+fit_full <- lm(Salary~. , data=hitters)
+select_model <- step(fit_full, direction="both")
+summary(select_model)
+
+anova(select_model, fit_full)
+
+anova_one_way <- aov(time~poison, data = df)
+summary(anova_one_way)
+```
+
+
+### Testing equality of group variances
+- Bartlett's test:
+  - sensitive to departure from normality; if samples are non-normal, Bartlett only tests for non-normality
+  - Levene's test and Brown-Forsythe test are alternative
+```{r}
+bartlett.test(weight ~ group, data = PlantGrowth) # with one independent var
+bartlett.test(len ~ interaction(supp,dose), data=ToothGrowth) #collapse multiple factors into a single variable
+
+# Levene's test with one independent variable
+leveneTest(weight ~ group, data = PlantGrowth)
+# Levene's test with multiple independent variables
+leveneTest(len ~ supp*dose, data = ToothGrowth)
+
+bf.test(weight ~ group, data = PlantGrowth)
+```
+  
+### Multiple Comparison
+with rejected ANOVA F-test, identify difference in group means
+- Fisher's LSD: just usual two-sample t-test for each pairwise comparison
+- Bonferroni: $\alpha' = \alpha/c$ where c = k(k-1)/2
+  very conservative, easier to reject H0
+- Tukey
+- Dunnett's
+```{r}
+#pairwise comparison
+pairwise.t.test(df$time, df$treat, p.adj = "none")
+pairwise.t.test(df$time, df$treat, p.adj = "bonferroni")
+#conclusion alpha = 0.05 still
+
+#LSD
+res = aov(df$time~ df$treat)
+summary(res)
+LSD.test(df$time, df$treat, DFerror="DF residuals", MSerror="mean sq residuals",p.adj="none")
+
+# Tukey test to study each pair of poison level
+TUKEY <- TukeyHSD(aov(df$time ~ df$poison), 'df$poison', conf.level=0.95, ordered =TRUE) #ordered for rank 
+# Tuckey test representation :
+plot(TUKEY , las=1 , col="brown")
+abs(mean(A)-mean(B)) # 0.1716667 < LSD do not reject
+
+
+```
+
+### Kruskal-Wallis ANOVA Test- test median, distribution
+Extension for Wilcoxon test
+```{r}
+kruskal.test(number ~ group, data =df5)
+```
+
+## Chapter 9- ANCOVA
+- combine X effect, and treatment factors
+- Hypothesis testing in Covariance Analysis
+$y_{ij} = \mu + \alpha_i + \beta x_{ij}+\beta_ix_{ij}+\epsilon_{ij}$
+alpha_i: effects,categorical
+beta: covariate, continuous
+beta_i: interaction
+
+1. H0:(equal slope, no interaction) all betas = 0
+2. if H0 cannot be rejected
+  - H0x:(no x effect) beta = 0 
+  - H0 treatment: (no treatment effect) all alphas = 0
+```{r}
+options(contrasts = c("contr.treatment", "contr.poly"))### These are the default contrasts in R
+
+# Analysis of covariance
+# here i set drug =F as the reference level
+# and you can use this to specify the reference level as you need
+###relevel: normally use first term as reference
+model.1 = lm (PostT ~ relevel(drug, ref = "F") + PreT + PreT:relevel(drug, ref = "F"), data = df) # PreT:drug is the interaction term
+
+summary(model.1) #get detailed effect estimate
+Anova(model.1, type="II")#get anova table
+
+#test significance of interaction term
+model.1 = lm (Pulse ~ Temp + Species + Temp:Species,data = Data)
+Anova(model.2, model.1) ### Interaction is not significant, so the slope among groups is not different
+anova(model_reduced, model_full)
+
+#test for factor effect
+model.2 = lm (Pulse ~ Temp + Species,data = Data)
+model.3 = lm(Pulse ~Temp, data=Data)
+Anova(model.3, model.2) ### The category variable (Species) is significant, treatment effect exists
+#tets for effect of beta
+model.4 - lm(Pulse ~ Species, data = Data)
+anova(model.4,model.2)
+contrasts(Data$Species)
+```
+```{r}
+#plot fitted line
+I.nought = -6.35729 #intercept
+I1 = I.nought + 0 
+I2 = I.nought + 19.81429 #estimate of one group
+I3 = I.nought + -10.18571 #estimate of another effect
+B  = 3.56961 #beta
+
+plot(x   = Data$Temp,
+     y   = Data$Pulse,
+     col = Data$Species,
+     pch = 16,
+     xlab = "Temperature",
+     ylab = "Pulse")
+
+legend('bottomright',
+       legend = levels(Data$Species),
+       col = 1:3,
+       cex = 1,   
+       pch = 16)
+
+abline(I1, B, lty=1, lwd=2, col = 1)
+abline(I2, B, lty=1, lwd=2, col = 2)
+abline(I3, B, lty=1, lwd=2, col = 3)
+```
+```{r}
+#y means
+tapply(df[, 1], df$drug, mean)
+#estimated y means
+# The means of Post-Treatment scores per drug
+tapply(df[, 3], df$drug, mean)
+```
+  
+
+- Assumptions: 
+  - linearity between the covatiate and the outcome variable
+  - outcome variable normal distributed
+  - Homoscedasticity: iid constant variance for error
+  - no sign of outliers
+  - independent variables should be categorical
+  - dependent variables and covariate shoube continuous
+  - observations are independent
+  
+```{r}
+shapiro.test(residuals(model.3))
+tapply(df2$Days, df2$B, shapiro.test)#testing normality for groups
+
+#non-normality sqareroot trans or log trans
+df$PostT_sq = sqrt(df$PostT)
+
+model.4 = lm(PostT_sq ~ PreT, data = df)
+summary(model.4)
+shapiro.test(residuals(model.4))
+```
+
+e.g. When the mean of Y is the largest among patients from the severe weight gain group, i.e.(μ3>μ1,μ3>μ2) or
+(β1<0 and β2<0)
+```{r}
+model.2 = lm(Days ~ relevel(B, ref = "3"), data = df2)
+summary(model.2)
+anova(model.2)
+```
+the p-value is very small, which means that the coefficients are significant (<0). Therefore, we can conclude that the mean of Y is the largest among patients from the severe weight gain group.
+
+## Chapter 10- Two-way ANOVA (Tut9)
+- main effect: test whether means are significantly different between levels of one factor
+- interactions: a difference in differences of means 
+- two-way anova: no interaction
+  two-way (fully) factorial anova: care about (all) interactions
+$Y_{ijk}= \mu+\alpha_i+\beta_j+(\alpha\beta)_{ij}+\epsilon_{ijk}$
+
+```{r}
+# Two-way interaction plot
+interaction.plot(x.factor = df1$B, trace.factor = df1$A, 
+                 response = df1$Days, fun = mean, 
+                 type = "b", legend = TRUE, 
+                 xlab = "B", ylab="Days",
+                 pch=c(1,20), col = c("#00AFBB", "#E7B800"))
+```
+
+
+```{r}
+res.aov2 <- aov(len ~ supp + dose, data = my_data)
+summary(res.aov2)
+
+# Two-way ANOVA with interaction effect
+# These two calls are equivalent
+res.aov3 <- aov(len ~ supp * dose, data = my_data)
+res.aov3 <- aov(len ~ supp + dose + supp:dose, data = my_data)
+summary(res.aov3)
+
+#estimate \sigma^2
+sum(residuals(model.3)^2) /56 # 56 = degrees of freedom
+```
+
+1. Test model assumptions
+2. Test interaction, individual factors
+  -interaction: F-test
+  -factor significance: t-test
+
+Carry out an appropriate test to test that the two least squares means are equal against the alternative hypothesis that the least squares mean of W for A=1 is greater than that for A=2 at the 2.5% level of significance. 
+$H_0:\alpha = 0, H_1: \alpha>0$
+```{r}
+#relevel
+model = lm(formula = W ~ relevel(A, ref = "2") + relevel(B, ref = "3"),data = df1)
+```
+
+## Chapter 11- Logistic Regression
+### GLM
+- Random component: has the probability distribution of exponential family
+- Systematic component 
+- Link function
+### Logistic regression model
+$logit(\pi)=log(\frac{\pi}{1-\pi})= \beta_0 + \Sigma\beta_ix_i$
+- binomial component: $E(Y)= \pi$
+- Systematic component $\eta = \beta_0 + \Sigma\beta_ix_i$
+- Link function $g(\pi)=log(\frac{\pi}{1-\pi})$
+
+For rare event use Complementary log-log link 
+$g(\pi) = log[-log(1-\pi)]$
+
+IMPORTANT NOTIONS:
+- odds = prob(success)/prob(fail)
+- risk differencce of an event: RD(1:2)=p1-p2
+- risk ratio of an event: RR(1:2)= p1/p2
+- odds ratio: OR(1:2)= odds1/odds2
+
+Logistic regression: use odds ratio often
+- continuous variable:
+  $OR = exp(\beta_i)$
+  not work when Xi and Xj highly correlated
+- categorical independent variables by dummy varibales:
+  OR(j:the last level) = exp(beta_j)
+- categorical independent variables by contrast varibales:
+  OR(j:the last) = exp(beta_1 + beta_2 + ... + 2*beta_j+ ...+beta_{g-1})
+  OR(j:l) = exp(beta_j - beta_l)
+```{r}
+mydata$rank <- factor(mydata$rank)
+mydata$admit <- factor(mydata$admit)
+mylogit <- glm(admit ~ gre + gpa + rank, data = mydata, family = "binomial")
+summary(mylogit)
+#intepret: For example, having attended an undergraduate institution with rank of 2, versus an institution with a rank of 1, changes the log odds of admission by -0.675.
+
+fit2 <- glm(believe~age, family = "binomial", weights = count, data = santa2)
+summary(fit2)
+##   believe  age count
+## 1     Yes Age3    30
+## 2     Yes Age4    13
+## 3     Yes Age5    15
+## 4     Yes Age6     5
+## 5      No Age3     5
+## 6      No Age4    10
+
+##    age bYes bNo
+## 1 Age3   30   5
+## 2 Age4   13  10
+## 3 Age5   15  12
+## 4 Age6    5  28
+santa3$age <- relevel(santa3$age, ref = "Age6")
+fit3 <- glm(cbind(bYes,bNo)~age, family = "binomial", data = santa3)
+summary(fit3)
+
+## CIs using profiled log-likelihood
+confint(mylogit)
+confint.default(mylogit) ## CIs using standard errors
+
+#CHISQ TEST
+#testing chisq
+#an overall effect of rank
+wald.test(b = coef(mylogit), Sigma = vcov(mylogit), Terms = 4:6)
+
+#test whether rank2 = rank3
+l <- cbind(0, 0, 0, 1, -1, 0)
+wald.test(b = coef(mylogit), Sigma = vcov(mylogit), L = l)
+
+### EFFECT ON THE PROB
+### What is the estimated odds-ratio between a 3-year old and a 6-year old believing in Santa Claus? 
+### Is it significant?
+## odds ratios only
+exp(coef(mylogit)) #taking Age6 as reference
+## odds ratios and 95% CI
+exp(cbind(OR = coef(mylogit), confint(mylogit)))
+```
+indicating that the odds ratio is significantly greater than 1, i.e. children with age 3 are significantly more likely to believe in Santa than children with age 6.
+
+ODDS RATIO: Now we can say that for a one unit increase in gpa, the odds of being admitted to graduate school (versus not being admitted) increase by a factor of 2.23;
+0.08345462: The odds of the survival of the male adults are 91.7% lower than the odds of the survival of the female adults.
+
+- Prediction 
+$p = \frac{exp(x\beta)}{1+exp(x\beta)}= (1+exp(-x\beta))^{-1}$
+```{r}
+#prediction
+newdata2 <- with(mydata, data.frame(gre = rep(seq(from = 200, to = 800, length.out = 100),
+    4), gpa = mean(gpa), rank = factor(rep(1:4, each = 100))))
+newdata3 <- cbind(newdata2, predict(mylogit, newdata = newdata2, type = "link",
+    se = TRUE))
+newdata3 <- within(newdata3, {
+    PredictedProb <- plogis(fit)
+    LL <- plogis(fit - (1.96 * se.fit))
+    UL <- plogis(fit + (1.96 * se.fit))
+})
+
+
+ggplot(newdata3, aes(x = gre, y = PredictedProb)) + geom_ribbon(aes(ymin = LL,ymax = UL, fill = rank), alpha = 0.2) + geom_line(aes(colour = rank),
+    size = 1)
+
+#predict and confidence interval
+newdata1$rankP <- predict(fit_b2, newdata = newdata1, type = "response")
+prd <- predict(fit_b2, newdata = newdata1, type = "link", se = TRUE)
+PredictedProb <- plogis(prd$fit)
+LL <- plogis(prd$fit - (1.96 * prd$se.fit))
+UL <- plogis(prd$fit + (1.96 * prd$se.fit))
+cat("Prob. of survival:",PredictedProb,"\n Confidence Interval:[",LL,UL,"]")
+
+pred1 = predict(mylogit2, newdata=data.frame(Age=30,Pclass="1",
+                                    Sex="female"), se.fit=T, interval="confidence")
+plogis(pred1$fit)
+plogis(pred1$fit-1.96*pred1$se.fit)
+plogis(pred1$fit+1.96*pred1$se.fit)
+```
+
+
+### MLE
+### Goodness of fit tests
+Test for the global significance of this model
+Here based on log-likelihood ratio test or deviance
+- accuracy: 
+- sensitivity: true positivity
+- specifivity: true negativity
+
+- Pearson Chisq test for independence (table)
+```{r}
+##        age
+## believe Age3 Age4 Age5 Age6
+##     Yes   30   13   15    5
+##     No     5   10   12   28
+# perform Chi-square test for independence
+chisq.test(tbl)
+
+#chisq test
+wald.test(b = coef(fit1), Sigma = vcov(fit1), Terms = 2:12) # test the significance of the 2-12 terms
+```
+
+- LRT numerical
+```{r}
+
+#test stat
+with(mylogit, null.deviance - deviance)
+#The degrees of freedom for the difference between the two models
+with(mylogit, df.null - df.residual)
+#pvalue
+with(mylogit, pchisq(null.deviance - deviance, df.null - df.residual, lower.tail = FALSE))
+
+logLik(mylogit)
+```
+- LRT 
+```{r}
+#  likelihood ratio test 
+# -- Full model: logit(pi) = intercept + beta1*Age3 + beta2*Age4 + beta3*Age5
+# -- Null model: logit(pi) = intercept
+fit0 <- glm(cbind(bYes,bNo)~1, family = "binomial", data = santa3)
+lrtest(fit3, fit0)
+#refine the model using LR CAN any interaction be dropped?
+drop1(fit1, test = "LR")
+```
+Our model as a whole fits significantly better than an empty model.
+```{r}
+### test significance of interaction term
+Anova(full, type="II")#get anova table
+```
+
+- Comparison 
+```{r}
+anova(mylogit1, mylogit_full,test="Chisq")
+```
+
+### Model selection 
+(check linear regression)
+
+## Chapter 12- Poisson log-linear model
+For count data, continuous integer
+$log(\mu) = \beta_0 + \Sigma\beta_jx_j$
+### Poisson regression
+```{r}
+summary(m1 <- glm(num_awards ~ prog + math, family="poisson", data=p))
+
+#prediction on the full categorical variable
+(s1 <- data.frame(math = mean(p$math),
+  prog = factor(1:3, levels = 1:3, labels = levels(p$prog))))
+predict(m1, s1, type="response", se.fit=TRUE)
+
+prd <- predict(fit_rwm, newdata1, type="response", se.fit=TRUE)
+LL <- prd$fit - (1.96 * prd$se.fit)
+UL <- prd$fit + (1.96 * prd$se.fit)
+cat("Prob. of survival:",prd$fit,"\n Confidence Interval:[",LL,UL,"]")
+
+###plot the predicted
+## calculate and store predicted values
+p$phat <- predict(m1, type="response")
+
+## order by program and then by math
+p <- p[with(p, order(prog, math)), ]
+
+## create the plot
+ggplot(p, aes(x = math, y = phat, colour = prog)) +
+  geom_point(aes(y = num_awards), alpha=.5, position=position_jitter(h=.2)) +
+  geom_line(size = 1) +
+  labs(x = "Math Score", y = "Expected number of awards")
+
+# plot regression coefficients for poisson.model2
+plot_summs(poisson.model2, scale = TRUE, exp = TRUE)
+# plot regression coefficients for poisson.model2 and poisson.model
+plot_summs(poisson.model, poisson.model2, scale = TRUE, exp = TRUE)
+```
+### Model Rate data - Offset
+ X/n where X is the event to happen and n is the grouping
+```{r}
+#offset log population n
+poisson.model.rate <- glm(cases ~ city + age+ offset(logpop), family = poisson(link = "log"), data = cancer.data)
+#display summary
+summary(poisson.model.rate)
+```
+
+### Goodness of fit
+- LRT (deviance)
+- Pearson Chisq test
+
+• The information on deviance is also provided. We can use the residual deviance to perform a goodness of fit test for the overall model. 
+The residual deviance is the difference between the deviance of the current model and the maximum deviance of the ideal model where the predicted values are identical to the observed. 
+Therefore, if the residual difference is small enough, the goodness of fit test will not be significant, indicating that the model fits the data.
+```{r}
+with(m1, cbind(res.deviance = deviance, df = df.residual,
+  p = pchisq(deviance, df.residual, lower.tail=FALSE)))
+```
+- We conclude that the model fits reasonably well because the goodness-of-fit chi-squared test is not statistically significant. If the test had been statistically significant, it would indicate that the data do not fit the model well. In that situation, we may try to determine if there are omitted predictor variables, if our linearity assumption holds and/or if there is an issue of over-dispersion.
+- Greater difference in deviance value and df means a bad fit.
+
+```{r}
+## update m1 model dropping prog
+m2 <- update(m1, . ~ . - prog)
+## test model differences with chi square test
+anova(m2, m1, test="Chisq")
+```
+
+### Over-dispersion
+- Assumption: E(Y) = Var(Y)
+- Over-dispersion means Var(y) > E(Y): negative binomial distribution is appropriate
+  - Residual Deviance is greater than the degrees of freedom: This means that the estimates are correct, but the standard errors (standard deviation) are wrong and unaccounted for by the model.
+```{r}
+# Fit Negative Binomial regression model(Model 4)
+fit4 <- glm.nb(art ~ gen + mar + kid5 + phd + ment + gen:kid5, 
+               link = log, data = pub)
+summary(fit4)
+```
+Comparison:
+The goodness-of-fit measure Deviance/df=1.106 is close to 1, indicating a more adequate fit than the Poisson regression model in part (b) where Deviance/df=1.800. The lack-of-fit of the Poisson model is probably due to over-dispersion, as also indicated by the estimated dispersion α̂=1⁄2.2643=0.4416 from the negative binomial fit. Therefore, the negative binomial regression model fits the data better than the Poisson regression model.
+
+The interaction effect Igen=Female×kid5 and the variable phd are also insignificant with large p-values (by Wald tests), seemingly a consistent result as from the fitted Poisson regression model.
+
+```{r}
+##1 view the dependent variable breaks data continuity by creating a histogram
+hist(data$breaks)
+
+##2 see over-dispersion
+mean(data$breaks) # calculate mean
+var(data$breaks)
+#Residual Deviance is greater than the degrees of freedom, it exists
+
+##3 fit model
+poisson.model <- glm(breaks ~ wool + tension, data, family = poisson(link = "log"))
+summary(poisson.model)
+
+##4 more correct standard error
+poisson.model2 <- glm(breaks ~ wool + tension, data = data, family = quasipoisson(link = "log"))
+summary(poisson.model2)
+
+
+# extract coefficients from first model using 'coef()'
+coef1 = coef(poisson.model)
+# extract standard errors from first model using 'se.coef()'
+se.coef1 = se.coef(poisson.model)
+
+#explain exp(coef)
+exp(coef1)
+```
+This shows that changing from type A wool to type B wool results in a decrease in breaks 0.8138425 times the intercept
+if we change wool type from A to B, the number of breaks will fall by 18.6% assuming all other variables are the same.
+
+The coefficient for the gender effect is estimated as β̂gen=−0.2253, indicating that female PhD biochemists produced less publications than male PhD biochemists, when the other variables are kept fixed. The average ratio is estimated as e−0.2253=0.7983, i.e. about 20.2% less in the expected number of articles published by female PhD biochemists in last three years.
+
+1. aov()
+one-way anova, two-way anova
+2. anova()
+model comparison
+```{r}
+anova(m2, m1, test="Chisq") #for discret distri
+anova(m2,m1)
+```
+3. Anova(model.1, type="II") 
+get anova table
+
+```{r}
+
+```
+
+
+
+
