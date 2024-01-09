@@ -1,6 +1,6 @@
 # statistical-data-analysis
 
-This contains the schoolwork of HKU course STAT3621 Statistical Data Analysis. 
+This contains the schoolwork of HKU course - Statistical Data Analysis. 
 
 analysis_boston_housing.Rmd contains statistical data analysis of Boston Housing Price Data.
 
